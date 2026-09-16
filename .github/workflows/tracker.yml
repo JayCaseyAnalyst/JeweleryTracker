@@ -34,7 +34,7 @@ jobs:
         env: 
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }} 
         run: |
-          python track_price.py
+          python ring_tracker.py
 
       # 'if: always()' ensures JSON history is updated even when the script exits with status 1
       - name: Commit and Push JSON updates
