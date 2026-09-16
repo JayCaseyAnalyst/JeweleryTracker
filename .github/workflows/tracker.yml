@@ -1,0 +1,45 @@
+name: Jared Price Tracker Bot
+
+on:
+  schedule:
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  track-price:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright beautifulsoup4
+
+      - name: Install Playwright Browsers
+        run: |
+          playwright install chromium --with-deps
+
+      - name: Run Price Tracker
+        env: 
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }} 
+        run: |
+          python track_price.py
+
+      # 'if: always()' ensures JSON history is updated even when the script exits with status 1
+      - name: Commit and Push JSON updates
+        if: always()
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chrono: update price_history.json [skip ci]"
+          file_pattern: "price_history.json"
