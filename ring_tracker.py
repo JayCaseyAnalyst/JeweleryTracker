@@ -2,12 +2,52 @@ import asyncio
 import json
 import os
 import re
-from datetime import datetime
+import sys
+import urllib.request
+from datetime import datetime, timezone
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
 URL = "https://www.jared.com/p/V-282350507"
 DATA_FILE = "price_history.json"
+
+def send_discord_alert(title: str, description: str, color: int):
+    """Sends a rich embed message to a Discord Webhook."""
+    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+    
+    if not webhook_url:
+        print("Skipping Discord notification: DISCORD_WEBHOOK_URL environment variable missing.")
+        return
+
+    payload = {
+        "username": "Jared Ring Tracker",
+        "embeds": [
+            {
+                "title": title,
+                "description": description,
+                "url": URL,
+                "color": color,  # Integer color value (e.g., Green = 3066993, Gold = 15844367)
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        ],
+    }
+
+    req = urllib.request.Request(
+        webhook_url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0",
+        },
+    )
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            if response.status in (200, 204):
+                print("Discord notification sent successfully!")
+    except Exception as e:
+        print(f"Failed to send Discord alert: {e}")
+
 
 
 async def fetch_page_html(url: str) -> str:
@@ -129,17 +169,44 @@ async def main():
         # Your custom logic branch
         if current_price < lowest_price:
             difference = lowest_price - current_price
-            print(
-                f" BEST PRICE! The price is the best we've seen by ${difference:,.2f}. Now is the best time to buy!"
+            desc = (
+                f"**BEST PRICE EVER RECORDED!**\n\n"
+                f"• **New Price:** `${current_price:,.2f}`\n"
+                f"• **Savings Below Record Low:** `${difference:,.2f}`\n"
+                f"• **Previous Record Low:** `${lowest_price:,.2f}`\n\n"
+                f"[Click here to buy on Jared]({URL})"
             )
+            send_discord_alert("🔥 All-Time Record Price Drop!", desc, color=15844367)  # Gold
         elif current_price < previous_price:
             difference = previous_price - current_price
-            print(f" PRICE DROP! The price decreased by ${difference:,.2f}.")
-        elif current_price > previous_price:
-            difference = current_price - previous_price
-            print(
-                f" PRICE INCREASE! The price increased by ${difference:,.2f}."
+            desc = (
+                f"**PRICE DROP DETECTED!**\n\n"
+                f"• **New Price:** `${current_price:,.2f}`\n"
+                f"• **Price Decreased By:** `${difference:,.2f}`\n"
+                f"• **Previous Check Price:** `${previous_price:,.2f}`\n"
+                f"• **Record Low:** `${lowest_price:,.2f}`\n\n"
+                f"[Click here to view on Jared]({URL})"
             )
+            send_discord_alert("📉 Ring Price Dropped!", desc, color=3066993)  # Green
+        elif current_price > previous_price:
+            difference = (current_price - previous_price)*-1
+            desc = (
+                f"**PRICE INCREASE DETECTED!**\n\n"
+                f"• **New Price:** `${current_price:,.2f}`\n"
+                f"• **Price Increased By:** `${difference:,.2f}`\n"
+                f"• **Previous Check Price:** `${previous_price:,.2f}`\n"
+                f"• **Record Low:** `${lowest_price:,.2f}`\n\n"
+                f"[Click here to view on Jared]({URL})"
+            )
+            send_discord_alert("😱 Ring Price Increase!", desc, color=16711680)  # Red
+        elif current_price == previous_price:
+            desc = (
+                f"**NO CHANGE**\n\n"
+                f"• **Current Price:** `${current_price:,.2f}`\n"
+                f"• **Previous Record Low:** `${lowest_price:,.2f}`\n\n"
+                f"[Click here to buy on Jared]({URL})"
+            )
+            send_discord_alert("😶 Ring Price Stable.", desc, color=808080)  # Grey
         else:
             print(" NO CHANGE: Price remains unchanged since last check.")
     else:
