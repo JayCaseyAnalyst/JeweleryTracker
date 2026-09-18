@@ -11,7 +11,7 @@ from playwright.async_api import async_playwright
 URL = "https://www.jared.com/p/"
 DATA_FILE = "price_history.json"
 
-def send_discord_alert(title: str, description: str, color: int):
+def send_discord_alert(title: str, sku: str, description: str, color: int):
     """Sends a rich embed message to a Discord Webhook."""
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
     
@@ -25,7 +25,7 @@ def send_discord_alert(title: str, description: str, color: int):
             {
                 "title": title,
                 "description": description,
-                "url": URL,
+                "url": sku,
                 "color": color,  # Integer color value (e.g., Green = 3066993, Gold = 15844367)
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
@@ -180,7 +180,7 @@ async def compare_price(sku: str, notify: bool = True) -> None:
                     f"• **Previous Record Low:** `${lowest_price:,.2f}`\n\n"
                     f"[Click here to buy on Jared]({URL})"
                 )
-                send_discord_alert("🔥 All-Time Record Price Drop!", desc, color=15844367)  # Gold
+                send_discord_alert("🔥 All-Time Record Price Drop!", URL, desc, color=15844367)  # Gold
             elif current_price < previous_price:
                 difference = previous_price - current_price
                 desc = (
@@ -191,7 +191,7 @@ async def compare_price(sku: str, notify: bool = True) -> None:
                     f"• **Record Low:** `${lowest_price:,.2f}`\n\n"
                     f"[Click here to view on Jared]({URL})"
                 )
-                send_discord_alert("📉 Ring Price Dropped!", desc, color=3066993)  # Green
+                send_discord_alert("📉 Ring Price Dropped!", URL, desc, color=3066993)  # Green
             elif current_price > previous_price:
                 difference = (current_price - previous_price)
                 desc = (
@@ -202,7 +202,7 @@ async def compare_price(sku: str, notify: bool = True) -> None:
                     f"• **Record Low:** `${lowest_price:,.2f}`\n\n"
                     f"[Click here to view on Jared]({URL})"
                 )
-                send_discord_alert("😱 Ring Price Increase!", desc, color=16711680)  # Red
+                send_discord_alert("😱 Ring Price Increase!", URL, desc, color=16711680)  # Red
             elif current_price == previous_price:
                 desc = (
                     f"**NO CHANGE**\n\n"
@@ -210,7 +210,7 @@ async def compare_price(sku: str, notify: bool = True) -> None:
                     f"• **Previous Record Low:** `${lowest_price:,.2f}`\n\n"
                     f"[Click here to buy on Jared]({URL})"
                 )
-                send_discord_alert("😶 Ring Price Stable.", desc, color=808080)  # Grey
+                send_discord_alert("😶 Ring Price Stable.", URL, desc, color=808080)  # Grey
             else:
                 print(" NO CHANGE: Price remains unchanged since last check.")
         else:
