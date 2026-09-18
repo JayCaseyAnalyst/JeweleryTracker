@@ -233,6 +233,7 @@ async def main():
     PRODUCTS = [
     "V-282350507",
     "V-930843608",  # Add additional SKUs here
+    "V-780031009",
     ]
 
     for index, sku in enumerate(PRODUCTS, 1):
