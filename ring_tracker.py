@@ -26,6 +26,7 @@ COLOR_NO_CHANGE = 808080       # Grey
 def send_discord_alert(title: str, sku: str, description: str, color: int) -> None:
     """Sends a rich embed message to a Discord Webhook."""
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+    url = URL + sku
 
     if not webhook_url:
         print(
@@ -39,7 +40,7 @@ def send_discord_alert(title: str, sku: str, description: str, color: int) -> No
             {
                 "title": title,
                 "description": description,
-                "url": sku,
+                "url": url,
                 "color": color,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
