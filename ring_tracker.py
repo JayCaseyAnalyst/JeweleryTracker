@@ -13,8 +13,12 @@ from bs4 import BeautifulSoup
 
 URL = "https://www.jared.com/p/"
 DATA_FILE = "price_history.json"
-DEFAULT_SKUS = ["V-282350507", "V-930843608", "V-780031009"]
 DEFAULT_DELAY = 3.0
+
+# Create default sku list from .txt
+DEFAULT_SKUS: list = []
+with open("Default_Skus.txt", "r", encoding="utf-8") as f:
+            DEFAULT_SKUS.extend(line.strip() for line in f if line.strip())
 
 # Webhook color values (Discord decimal RGB)
 COLOR_ALL_TIME_LOW = 15844367  # Gold
